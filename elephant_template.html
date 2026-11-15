@@ -1,0 +1,322 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:P;src:url(Pretendard-Bold.woff2);font-weight:700}
+@font-face{font-family:P;src:url(Pretendard-ExtraBold.woff2);font-weight:800}
+@font-face{font-family:P;src:url(Pretendard-Black.woff2);font-weight:900}
+html,body{margin:0;padding:0;background:#0e1320;width:1080px;height:1920px;overflow:hidden;font-family:P,sans-serif}
+#stage{position:absolute;inset:0}
+#cap{position:absolute;left:70px;right:70px;top:1230px;text-align:center;color:#fff;font-weight:800;font-size:64px;line-height:1.38;letter-spacing:-1.5px}
+#cap .line{display:block}
+#cap .w{display:inline-block;white-space:pre}
+.y{color:#FFD23F}.r{color:#FF5B5B}
+#end{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:900;text-align:center;opacity:0}
+</style></head>
+<body>
+<svg id="stage" viewBox="0 0 1080 1920" width="1080" height="1920"></svg>
+<div id="cap"></div>
+<div id="end"></div>
+<script>
+const OL='#1b1f2e'; // outline
+const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const P=(t,a,b)=>clamp((t-a)/(b-a));
+const io=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+const oB=t=>{const c1=1.9,c3=c1+1;return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2)};
+const oC=t=>1-Math.pow(1-t,3);
+
+/* ---------- background ---------- */
+function bg(tint){
+  return `<defs>
+   <radialGradient id="bgG" cx="50%" cy="38%" r="75%">
+    <stop offset="0" stop-color="${tint?'#3a3024':'#2a3450'}"/><stop offset=".6" stop-color="${tint?'#1f1a14':'#161c2c'}"/><stop offset="1" stop-color="#0b0f19"/></radialGradient>
+   <radialGradient id="glow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#7cf0c8" stop-opacity=".55"/><stop offset="1" stop-color="#7cf0c8" stop-opacity="0"/></radialGradient>
+   <linearGradient id="capFade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b0f19" stop-opacity="0"/><stop offset="1" stop-color="#0b0f19" stop-opacity=".85"/></linearGradient>
+  </defs>
+  <rect width="1080" height="1920" fill="url(#bgG)"/>`;
+}
+function ground(y=1050){
+  let s=`<line x1="-400" y1="${y}" x2="1480" y2="${y}" stroke="#2f3a55" stroke-width="4"/>`;
+  for(let i=0;i<14;i++){const x=40+i*80+(i%3)*17;s+=`<path d="M${x} ${y} l6 -14 l6 14" stroke="#2f3a55" stroke-width="3" fill="none"/>`}
+  return s;
+}
+
+/* ---------- elephant (faces right, feet at 0,0) ---------- */
+function elephant(o){
+  const {x,y,s=1,hs=1,sad=0,lean=0,blink=0}=o;
+  const body='#aab6cc', dark='#8794ad', ear='#97a4bd';
+  const leg=(lx,c)=>`<rect x="${lx}" y="-190" width="64" height="192" rx="22" fill="${c}" stroke="${OL}" stroke-width="7"/>
+     <path d="M${lx+10} -4 h44" stroke="${OL}" stroke-width="4" opacity=".35"/>`;
+  const headDroop=sad*22;
+  const eyeY=-372;
+  const eye = sad>0.5||blink
+    ? `<path d="M250 ${eyeY} q12 10 24 0" stroke="${OL}" stroke-width="6" fill="none" stroke-linecap="round"/>`
+    : `<circle cx="262" cy="${eyeY}" r="12" fill="${OL}"/><circle cx="266" cy="${eyeY-4}" r="4" fill="#fff"/>`;
+  const tear = sad>0.6? `<path d="M258 ${eyeY+18} q-9 16 0 22 q9 -6 0 -22z" fill="#7fc8ff" opacity="${clamp((sad-.6)*3)}"/>`:'';
+  return `<g transform="translate(${x} ${y}) scale(${s}) rotate(${lean} 0 0)">
+   <path d="M-215 -300 q-55 30 -40 120" stroke="${OL}" stroke-width="8" fill="none" stroke-linecap="round"/>
+   <path d="M-257 -186 l-10 22 l20 -6z" fill="${OL}"/>
+   ${leg(-175,dark)}${leg(70,dark)}
+   <ellipse cx="0" cy="-285" rx="235" ry="160" fill="${body}" stroke="${OL}" stroke-width="7"/>
+   <path d="M-150 -380 q60 -30 140 -25" stroke="#c6d0e2" stroke-width="14" fill="none" stroke-linecap="round" opacity=".7"/>
+   ${leg(-120,body)}${leg(130,body)}
+   <g transform="translate(200 -330) rotate(${headDroop}) scale(${hs}) translate(-200 330)">
+     <path d="M285 -300 C 340 -250, 340 -150, 300 -90 q-8 14 -24 6" stroke="${OL}" stroke-width="66" fill="none" stroke-linecap="round"/>
+     <path d="M285 -300 C 340 -250, 340 -150, 300 -90 q-8 14 -24 6" stroke="${body}" stroke-width="52" fill="none" stroke-linecap="round"/>
+     <circle cx="230" cy="-345" r="115" fill="${body}" stroke="${OL}" stroke-width="7"/>
+     <path d="M286 -258 q34 18 36 50" stroke="#fffbe8" stroke-width="16" fill="none" stroke-linecap="round"/>
+     <path d="M286 -258 q34 18 36 50" stroke="${OL}" stroke-width="3" fill="none" stroke-linecap="round" opacity=".5"/>
+     <ellipse cx="148" cy="-330" rx="74" ry="100" fill="${ear}" stroke="${OL}" stroke-width="7" transform="rotate(${-8+sad*14} 160 -330)"/>
+     <ellipse cx="154" cy="-330" rx="42" ry="64" fill="#b9a3b8" opacity=".55" transform="rotate(${-8+sad*14} 160 -330)"/>
+     ${eye}${tear}
+     <ellipse cx="275" cy="-318" rx="18" ry="10" fill="#ff9aa8" opacity=".55"/>
+   </g>
+  </g>`;
+}
+function ankle(o,which='back'){ // world coords of back-left ankle
+  const lx = which==='back'? -143 : -88;
+  const a=(o.lean||0)*Math.PI/180, s=o.s||1;
+  const px=lx*s, py=-24*s;
+  return [o.x+px*Math.cos(a)-py*Math.sin(a), o.y+px*Math.sin(a)+py*Math.cos(a)];
+}
+
+/* ---------- stake & rope ---------- */
+function stake(x,y,o={}){
+  const {rot=0,lift=0,s=1}=o;
+  return `<g transform="translate(${x} ${y-lift}) rotate(${rot}) scale(${s})">
+    <path d="M-22 -90 h44 v95 l-22 26 l-22 -26z" fill="#b8793f" stroke="${OL}" stroke-width="7" stroke-linejoin="round"/>
+    <rect x="-28" y="-104" width="56" height="22" rx="7" fill="#7b4a22" stroke="${OL}" stroke-width="7"/>
+    <path d="M-8 -70 v60 M8 -60 v40" stroke="#8d5528" stroke-width="5" stroke-linecap="round"/>
+  </g>`;
+}
+function rope(x1,y1,x2,y2,sag,col='#e8d39a'){
+  const mx=(x1+x2)/2, my=(y1+y2)/2+sag;
+  const d=`M${x1} ${y1} Q${mx} ${my} ${x2} ${y2}`;
+  return `<path d="${d}" stroke="${OL}" stroke-width="16" fill="none" stroke-linecap="round"/>
+          <path d="${d}" stroke="${col}" stroke-width="9" fill="none" stroke-linecap="round" stroke-dasharray="10 7"/>`;
+}
+
+/* ---------- person (faces right) ---------- */
+function person(o){
+  const {x,y,s=1,flip=1,lean=0,arms='down',face='neutral'}=o;
+  const skin='#f3c9a2', hood='#3f6fe0', pants='#2a3048';
+  let armsSvg='';
+  if(arms==='down') armsSvg=`<path d="M-38 -250 q-22 60 -14 110" stroke="${OL}" stroke-width="34" fill="none" stroke-linecap="round"/><path d="M-38 -250 q-22 60 -14 110" stroke="${hood}" stroke-width="22" fill="none" stroke-linecap="round"/>
+     <path d="M40 -250 q22 60 14 110" stroke="${OL}" stroke-width="34" fill="none" stroke-linecap="round"/><path d="M40 -250 q22 60 14 110" stroke="${hood}" stroke-width="22" fill="none" stroke-linecap="round"/>`;
+  if(arms==='pull') armsSvg=`<path d="M10 -245 L-110 -180" stroke="${OL}" stroke-width="34" fill="none" stroke-linecap="round"/><path d="M10 -245 L-110 -180" stroke="${hood}" stroke-width="22" fill="none" stroke-linecap="round"/><circle cx="-118" cy="-176" r="17" fill="${skin}" stroke="${OL}" stroke-width="6"/>`;
+  if(arms==='up') armsSvg=`<path d="M-38 -250 L-90 -360" stroke="${OL}" stroke-width="34" fill="none" stroke-linecap="round"/><path d="M-38 -250 L-90 -360" stroke="${hood}" stroke-width="22" fill="none" stroke-linecap="round"/><circle cx="-94" cy="-370" r="17" fill="${skin}" stroke="${OL}" stroke-width="6"/>
+     <path d="M40 -250 L92 -360" stroke="${OL}" stroke-width="34" fill="none" stroke-linecap="round"/><path d="M40 -250 L92 -360" stroke="${hood}" stroke-width="22" fill="none" stroke-linecap="round"/><circle cx="96" cy="-370" r="17" fill="${skin}" stroke="${OL}" stroke-width="6"/>`;
+  const brows = face==='strain'? `<path d="M2 -372 l22 8 M40 -366 l18 -6" stroke="${OL}" stroke-width="6" stroke-linecap="round"/>`
+              : face==='worry'? `<path d="M4 -366 l20 -6 M40 -372 l18 8" stroke="${OL}" stroke-width="6" stroke-linecap="round"/>`:'';
+  const mouth = face==='strain'? `<path d="M22 -320 h22" stroke="${OL}" stroke-width="6" stroke-linecap="round"/>`
+              : face==='happy'? `<path d="M18 -326 q14 16 30 0z" fill="${OL}"/>`
+              : face==='worry'? `<path d="M20 -318 q12 -10 26 0" stroke="${OL}" stroke-width="6" fill="none" stroke-linecap="round"/>`
+              : `<path d="M22 -322 q10 6 20 0" stroke="${OL}" stroke-width="6" fill="none" stroke-linecap="round"/>`;
+  return `<g transform="translate(${x} ${y}) scale(${s*flip} ${s}) rotate(${lean} 0 0)">
+    <rect x="-32" y="-120" width="28" height="122" rx="12" fill="${pants}" stroke="${OL}" stroke-width="7"/>
+    <rect x="4" y="-120" width="28" height="122" rx="12" fill="${pants}" stroke="${OL}" stroke-width="7"/>
+    <path d="M-36 -2 h36 M4 -2 h40" stroke="#f4f4f4" stroke-width="14" stroke-linecap="round"/>
+    <path d="M-56 -110 v-120 q0 -40 56 -42 q56 2 56 42 v120z" fill="${hood}" stroke="${OL}" stroke-width="7" stroke-linejoin="round"/>
+    <path d="M-20 -262 q20 18 40 0" stroke="#2c56c0" stroke-width="8" fill="none"/>
+    ${armsSvg}
+    <circle cx="6" cy="-345" r="60" fill="${skin}" stroke="${OL}" stroke-width="7"/>
+    <path d="M-56 -350 q-4 -70 62 -66 q58 2 62 46 q-30 -16 -64 -18 q-30 12 -60 38z" fill="#2a2230" stroke="${OL}" stroke-width="6" stroke-linejoin="round"/>
+    <circle cx="16" cy="-344" r="6.5" fill="${OL}"/><circle cx="48" cy="-344" r="6.5" fill="${OL}"/>
+    ${brows}${mouth}
+    <ellipse cx="0" cy="-326" rx="10" ry="6" fill="#ff9aa8" opacity=".5"/>
+  </g>`;
+}
+function tag(x,y,text,p,col='#ff5b5b'){
+  if(p<=0) return '';
+  const w=text.length*34+56, sc=oB(p);
+  return `<g transform="translate(${x} ${y}) scale(${sc})" opacity="${clamp(p*2)}">
+    <rect x="${-w/2}" y="-36" width="${w}" height="72" rx="18" fill="#fff" stroke="${col}" stroke-width="6"/>
+    <circle cx="${-w/2+30}" cy="0" r="9" fill="${col}"/>
+    <text x="${-w/2+50}" y="13" font-family="P" font-weight="800" font-size="36" fill="#1b1f2e">${text}</text>
+  </g>`;
+}
+function qmark(x,y,p){ if(p<=0)return ''; const sc=oB(p);
+  return `<g transform="translate(${x} ${y}) scale(${sc})"><circle r="70" fill="none" stroke="#9aa7c4" stroke-width="5" stroke-dasharray="14 12"/>
+  <text y="38" text-anchor="middle" font-family="P" font-weight="900" font-size="110" fill="#c9d2e6">?</text></g>`;}
+function sparkle(x,y,r,a){return `<path d="M${x} ${y-r} Q${x} ${y} ${x+r} ${y} Q${x} ${y} ${x} ${y+r} Q${x} ${y} ${x-r} ${y} Q${x} ${y} ${x} ${y-r}z" fill="#FFD23F" opacity="${a}"/>`}
+function burst(cx,cy,p){ if(p<=0||p>=1)return ''; let s='';
+  for(let i=0;i<10;i++){const ang=i/10*Math.PI*2, d=40+p*160; s+=sparkle(cx+Math.cos(ang)*d, cy+Math.sin(ang)*d, 18*(1-p)+4, 1-p)}
+  return s;}
+function sweat(x,y,t){let s='';for(let i=0;i<2;i++){const k=((t*1.6+i*.5)%1);s+=`<path d="M${x+i*34} ${y+k*40} q-10 18 0 24 q10 -6 0 -24z" fill="#7fc8ff" opacity="${1-k}"/>`}return s}
+function motionLines(x,y,a){return `<g opacity="${a}" stroke="#9aa7c4" stroke-width="6" stroke-linecap="round"><path d="M${x} ${y} h-60"/><path d="M${x+10} ${y+40} h-80"/><path d="M${x} ${y+80} h-50"/></g>`}
+
+/* ---------- captions ---------- */
+const BEATS=[
+ [0.2,  [[0.3,'서커스의 [y:코끼리]는'],[2.0,'[y:작은 말뚝] 하나에 묶여 있습니다']]],
+ [4.4,  [[4.5,'몇 톤짜리 코끼리가'],[6.3,'마음만 먹으면 [y:뽑을 수 있는] 말뚝']]],
+ [8.9,  [[9.0,'그런데 왜'],[9.8,'[r:도망가지] 않을까요?']]],
+ [11.6, [[11.7,'아기 코끼리였을 때'],[13.4,'수백 번 [y:당겨봤습니다]']]],
+ [15.6, [[15.7,'하지만 말뚝은'],[16.9,'[r:꿈쩍도] 하지 않았죠']]],
+ [19.0, [[19.1,'그리고 어느 날'],[20.6,'[r:당기는 걸 멈췄습니다]']]],
+ [23.0, [[23.1,'코끼리를 묶고 있는 건'],[24.8,'[y:말뚝이 아닙니다]']]],
+ [26.4, [[26.5,'[r:"안 된다"]는 그때의 기억이죠']]],
+ [28.6, [[28.7,'우리에게도 [y:말뚝]이 있습니다']]],
+ [31.6, [[31.7,'AI는 배우고 싶은데'],[32.9,'이 말뚝들이 [r:발목]을 잡죠']]],
+ [34.6, [[34.7,'그런데 지금, 한 번만'],[35.8,'[y:다시 당겨보세요]']]],
+ [37.4, [[37.5,'[y:생각보다 쉽게]'],[38.4,'뽑힙니다']]],
+ [40.0, []],
+];
+function parse(str){ // -> [{t,cls}]
+  const out=[]; const re=/\[(y|r):([^\]]+)\]|([^\[]+)/g; let m;
+  while((m=re.exec(str))){ const cls=m[1]||''; const txt=m[2]||m[3];
+    txt.split(/(\s+)/).forEach(w=>{ if(w==='')return; out.push({w,cls}); }); }
+  return out;
+}
+function captions(t){
+  let bi=-1; for(let i=0;i<BEATS.length;i++) if(t>=BEATS[i][0]) bi=i;
+  if(bi<0) return '';
+  const end = bi+1<BEATS.length? BEATS[bi+1][0] : 99;
+  const fadeOut = clamp((end-t)/0.15);
+  let html='';
+  for(const [lt,txt] of BEATS[bi][1]){
+    if(t<lt) continue;
+    const words=parse(txt); let k=0, line='';
+    for(const {w,cls} of words){
+      if(/^\s+$/.test(w)){line+=w;continue;}
+      const p=clamp((t-lt-k*0.07)/0.22); k++;
+      line+=`<span class="w ${cls}" style="opacity:${p};transform:translateY(${(1-oB(p))*26}px) scale(${lerp(.85,1,oB(p))})">${w}</span>`;
+    }
+    html+=`<span class="line">${line}</span>`;
+  }
+  return `<div style="opacity:${fadeOut}">${html}</div>`;
+}
+
+/* ---------- scenes ---------- */
+function cam(cx,cy,z){return `translate(540 860) scale(${z}) translate(${-cx} ${-cy})`}
+
+function render(t){
+  const svg=document.getElementById('stage');
+  let flash = t>=11.6 && t<23.0; // flashback
+  let s=bg(flash);
+  let world='', over='';
+  const GY=1050;
+
+  if(t<11.6){ // ---- adult elephant intro
+    let z=1, cx=540, cy=860;
+    if(t<4.4){ z=lerp(1,1.06,P(t,0,4.4)); }
+    else if(t<8.9){ const p=io(P(t,4.4,5.6)); z=lerp(1.06,2.1,p); cx=lerp(540,330,p); cy=lerp(860,1000,p); }
+    else { const p=io(P(t,8.9,9.7)); z=lerp(2.1,1,p); cx=lerp(330,540,p); cy=lerp(1000,860,p); }
+    const E={x:650,y:GY,s:1,blink:(t%3.2)<.12};
+    const [ax,ay]=ankle(E);
+    world+=ground(GY)+rope(268,GY-60,ax,ay,40)+stake(260,GY,{rot:Math.sin(t*2)*0.6})+elephant(E);
+    world+=qmark(880,560,P(t,9.8,10.3));
+    if(t>=6.3&&t<8.9){ // tug hint arrow
+      const a=P(t,6.3,6.8);
+      world+=`<g opacity="${a}"><path d="M260 ${GY-150} v-${60+20*Math.sin(t*8)}" stroke="#FFD23F" stroke-width="10" stroke-linecap="round"/><path d="M236 ${GY-200-20*Math.sin(t*8)} l24 -30 l24 30z" fill="#FFD23F"/></g>`;
+    }
+    s+=`<g transform="${cam(cx,cy,z)}">${world}</g>`;
+  }
+  else if(t<23.0){ // ---- flashback baby
+    const sitP=io(P(t,19.6,20.6));
+    const pulling = t<19.4;
+    const tug = pulling? Math.max(0,Math.sin((t-11.6)*5.2)) : 0;
+    const B={x:600+tug*14*(1-sitP),y:GY,s:.56,hs:1.32,lean:pulling?tug*5:0,sad:sitP,blink:(t%2.7)<.12};
+    const [ax,ay]=ankle(B);
+    world+=ground(GY)+rope(318,GY-60,ax,ay,pulling? lerp(30,2,tug):45)+stake(310,GY,{rot:tug*4})+elephant(B);
+    if(pulling&&t>12.6){ world+=sweat(B.x+150,GY-300,t)+motionLines(B.x-120,GY-250,tug*.8); }
+    if(t>=16.9&&t<19.4){ const p=P(t,16.9,17.2); world+=`<text x="310" y="${GY-140}" text-anchor="middle" font-family="P" font-weight="900" font-size="58" fill="#FF5B5B" opacity="${p}" transform="rotate(-8 310 ${GY-140})">꿈쩍</text>`; }
+    s+=`<g transform="${cam(520,880,1.15)}">${world}</g>`;
+    // sepia vignette + chip
+    over+=`<rect width="1080" height="1920" fill="#3b2a12" opacity=".18"/>
+      <g transform="translate(540 230)"><rect x="-120" y="-40" width="240" height="80" rx="40" fill="#f5e6c8" opacity=".92"/>
+      <text y="15" text-anchor="middle" font-family="P" font-weight="800" font-size="40" fill="#3b2a12">몇 년 전</text></g>`;
+  }
+  else if(t<28.6){ // ---- reveal: it's not the stake
+    const E={x:650,y:GY,s:1,blink:(t%3.2)<.12};
+    const [ax,ay]=ankle(E);
+    world+=ground(GY)+rope(268,GY-60,ax,ay,40)+stake(260,GY)+elephant(E);
+    // red X over stake
+    const x1=P(t,24.8,25.05), x2=P(t,25.05,25.3);
+    world+=`<g stroke="#FF5B5B" stroke-width="16" stroke-linecap="round">
+      <line x1="200" y1="${GY-170}" x2="${lerp(200,320,x1)}" y2="${lerp(GY-170,GY+20,x1)}" opacity="${x1>0?1:0}"/>
+      <line x1="320" y1="${GY-170}" x2="${lerp(320,200,x2)}" y2="${lerp(GY-170,GY+20,x2)}" opacity="${x2>0?1:0}"/></g>`;
+    // thought cloud with memory
+    const c=oB(P(t,26.5,27.0));
+    if(c>0){
+      const tug=Math.max(0,Math.sin(t*5.2));
+      const mini={x:-20+tug*6,y:70,s:.32,hs:1.32,lean:tug*5};
+      const [mx,my]=ankle(mini);
+      world+=`<g transform="translate(540 380) scale(${c})">
+        <circle cx="210" cy="250" r="16" fill="#f5e6c8"/><circle cx="250" cy="300" r="10" fill="#f5e6c8"/>
+        <ellipse cx="0" cy="0" rx="250" ry="170" fill="#f5e6c8" stroke="${OL}" stroke-width="7"/>
+        <clipPath id="cl"><ellipse cx="0" cy="0" rx="240" ry="160"/></clipPath>
+        <g clip-path="url(#cl)"><line x1="-260" y1="70" x2="260" y2="70" stroke="#c9b48c" stroke-width="4"/>
+        ${rope(-150,48,mx,my,2)}${stake(-152,70,{s:.6,rot:tug*4})}${elephant(mini)}</g></g>`;
+    }
+    s+=`<g transform="${cam(540,860,1)}">${world}</g>`;
+  }
+  else if(t<40.0){ // ---- us
+    const stakes=[[110,'나는 원래 기계치',29.6],[235,'이 나이에 무슨',30.4],[360,'해봤는데 안 되던데',31.1]];
+    const pullPhase=P(t,34.7,37.4);
+    const popT=[36.6,36.9,37.2];
+    const walk=io(P(t,38.0,39.6));
+    const pulling = t>=34.7 && t<37.6;
+    const hx = lerp(700,860,walk);
+    const H={x:hx,y:GY,s:1.05,flip:pulling?-1:1,lean:pulling? 8+Math.sin(t*10)*2:0,
+      arms: pulling?'pull': (t>=37.6&&t<38.2)?'up':'down',
+      face: pulling?'strain': (t>=37.4?'happy': (t>=31.7?'worry':'neutral'))};
+    world+=ground(GY);
+    // AI panel
+    const glowP=0.75+0.25*Math.sin(t*3);
+    world+=`<g transform="translate(920 560)"><circle r="190" fill="url(#glow)" opacity="${glowP}"/>
+      <rect x="-110" y="-80" width="220" height="160" rx="24" fill="#16203a" stroke="#7cf0c8" stroke-width="7"/>
+      <text y="30" text-anchor="middle" font-family="P" font-weight="900" font-size="84" fill="#7cf0c8">AI</text>
+      ${sparkle(95,-95,22,glowP)}${sparkle(-100,95,14,glowP)}</g>`;
+    stakes.forEach(([sx,label,ts],i)=>{
+      const ap=P(t,ts,ts+.35);
+      if(ap<=0) return;
+      const pp=P(t,popT[i],popT[i]+.9);
+      const lift=pp>0? (Math.sin(pp*Math.PI)*260): 0;
+      const rot=pp*(i%2?-160:160);
+      const fall=pp>0? pp*pp*0:0;
+      const [ax,ay]=[hx-24*1.05*(pulling?-1:1),GY-24];
+      const sxw = sx + (pp>0? pp*(-60+i*20):0);
+      const sy = GY - (pp>0? lift: 0) + (pp>=1? 0:0);
+      if(pp<1) world+=rope(sx+8,GY-60-lift,ax,ay, pulling? 4: 50+i*10);
+      world+=`<g opacity="${pp>=1?0:ap}">${stake(sxw,sy,{rot,s:.85})}</g>`;
+      world+=burst(sx,GY-60,P(t,popT[i],popT[i]+.6));
+      const tagY=[700,800,900][i];
+      world+= pp>0? `<g opacity="${1-pp}">${tag(250,tagY,label,1)}</g>` : tag(250,tagY,label,ap);
+    });
+    world+=person(H);
+    if(pulling) world+=sweat(hx-60,GY-420,t);
+    s+=`<g transform="${cam(540,860,1)}">${world}</g>`;
+  }
+  else { // ---- end card
+    world+=ground(GY)+stake(540,GY,{rot:-70,lift:-10});
+    s+=`<g transform="${cam(540,860,1)}">${world}</g>`;
+  }
+
+  // caption readability fade
+  s+=`<rect x="0" y="1150" width="1080" height="770" fill="url(#capFade)" opacity=".6"/>`;
+  s+=over;
+  // dip to black at cuts
+  const cuts=[11.6,23.0,28.6,40.0]; let dip=0;
+  cuts.forEach(c=>{dip=Math.max(dip,1-Math.abs(t-c)/0.18)});
+  if(dip>0) s+=`<rect width="1080" height="1920" fill="#000" opacity="${dip}"/>`;
+  svg.innerHTML=s;
+  document.getElementById('cap').innerHTML=captions(t);
+
+  // end card
+  const end=document.getElementById('end');
+  const ep=P(t,40.2,40.7);
+  end.style.opacity=ep;
+  if(ep>0){
+    const bounce=Math.sin(t*6)*10;
+    end.innerHTML=`<div style="font-size:54px;color:#9aa7c4;font-weight:800;margin-top:-260px;transform:translateY(${(1-oB(ep))*30}px)">오늘의 질문</div>
+      <div style="font-size:92px;line-height:1.3;margin-top:30px;letter-spacing:-3px;transform:scale(${lerp(.9,1,oB(ep))})">나를 묶고 있는<br><span class="y">말뚝</span>은 뭔가요?</div>
+      <div style="font-size:46px;color:#fff;opacity:${P(t,41.2,41.6)};margin-top:520px;font-weight:700">댓글로 하나만 적어보세요</div>
+      <div style="opacity:${P(t,41.2,41.6)};transform:translateY(${bounce}px);margin-top:16px"><svg width="60" height="60"><path d="M30 6 v40 M12 30 l18 18 l18 -18" stroke="#FFD23F" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
+    document.getElementById('cap').innerHTML='';
+  } else end.innerHTML='';
+}
+window.render=render;
+window.DURATION=43.5;
+const q=new URLSearchParams(location.search); if(q.get('t')) render(+q.get('t')); else render(0);
+</script>
+</body></html>
