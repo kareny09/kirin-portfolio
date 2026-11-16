@@ -1,0 +1,21 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:P;src:url(Pretendard-Bold.woff2);font-weight:700}
+@font-face{font-family:P;src:url(Pretendard-ExtraBold.woff2);font-weight:800}
+@font-face{font-family:P;src:url(Pretendard-Black.woff2);font-weight:900}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#06080c;font-family:P,sans-serif}
+canvas{position:absolute;inset:0}
+#ui{position:absolute;inset:0;pointer-events:none}
+#tag{position:absolute;left:56px;top:72px;font-weight:800;font-size:34px;color:#cfd6e4;letter-spacing:-.5px;display:flex;gap:14px;align-items:center}
+#tag .k{background:#2E8BFF;color:#fff;border-radius:10px;padding:6px 16px}
+#cap{position:absolute;left:60px;right:60px;top:1330px;text-align:center;color:#fff;font-weight:800;font-size:66px;line-height:1.45;letter-spacing:-2px;text-shadow:0 4px 18px rgba(0,0,0,.7)}
+#cap .hl{display:inline-block;padding:0 16px 4px;border-radius:14px;line-height:1.25;text-shadow:none}
+.o{background:#F0761E}.b{background:#2E8BFF}.r{background:#E5484D}
+#dip{position:absolute;inset:0;background:#000;opacity:0}
+</style>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+</head><body>
+<div id="ui"><div id="dip"></div><div id="tag"><span class="k">AI 커닝 2편</span><span>탐지의 과학</span></div><div id="cap"></div></div>
+<script type="module" src="main.js"></script>
+</body></html>
